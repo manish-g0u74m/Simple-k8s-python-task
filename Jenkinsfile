@@ -13,7 +13,7 @@ pipeline{
         stage("Code Build & Test"){
             steps{
                 echo "Code Build Stage"
-                sh "docker build -t g0u74m/kainskep-app ."
+                sh "docker build -t kainskep-app ."
             }
         }
         stage("Push To DockerHub"){
@@ -23,7 +23,7 @@ pipeline{
                     usernameVariable:"dockerHubUser", 
                     passwordVariable:"dockerHubPass")]){
                 sh 'echo $dockerHubPass | docker login -u $dockerHubUser --password-stdin'
-                sh "docker image tag restaurent-app:latest ${env.dockerHubUser}/kainskep-app:latest"
+                sh "docker image tag kainskep-app:latest ${env.dockerHubUser}/kainskep-app:latest"
                 sh "docker push ${env.dockerHubUser}/kainskep-app:latest"
                 }
             }
