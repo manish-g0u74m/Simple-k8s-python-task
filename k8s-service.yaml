@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: knainskep-service
+  name: kainskep-service
 spec:
   selector:
-    app: knainskep
+    app: kainskep  # Add this label of my kainskep-app 
   ports:
-  - port: 5000          
-    targetPort: 5000    
-    nodePort: 30007     
+  - port: 5000
+    targetPort: 5000
+    nodePort: 30005 
     protocol: TCP
   type: NodePort
