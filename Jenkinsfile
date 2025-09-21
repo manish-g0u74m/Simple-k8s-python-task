@@ -28,11 +28,14 @@ pipeline{
                 }
             }
         }
-        stage("Deploy"){
-            steps{
-                sh "kubectl apply -f k8s-pod.yaml"
-                sh "kubectl apply -f k8s-service.yaml"
+        stage("Deploy") {
+            steps {
+                kubernetesDeploy(
+                        kubeConfig: '/var/lib/jenkins/.kube/config',
+                        configs: 'k8s-pod.yaml,k8s-service.yaml'
+                )
             }
         }
+
     }
 }
