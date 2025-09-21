@@ -30,8 +30,8 @@ pipeline{
         }
         stage("Deploy"){
             steps{
-                sh "kubectl apply -f k8s-pod.yml"
-                sh "kubectl apply -f k8s-service.yml"
+                sh "kubectl apply -f k8s-pod.yaml"
+                sh "kubectl apply -f k8s-service.yaml"
             }
         }
     }
