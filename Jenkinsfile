@@ -30,12 +30,11 @@ pipeline{
         }
         stage("Deploy") {
             steps {
-                kubernetesDeploy(
-                        kubeConfig: '/var/lib/jenkins/.kube/config',
-                        configs: 'k8s-pod.yaml,k8s-service.yaml'
-                )
+                withKubeConfig([credentialsId: 'kube-cred-id']) {
+                    sh "kubectl apply -f k8s-pod.yaml"
+                    sh "kubectl apply -f k8s-service.yaml"
+                }
             }
         }
-
     }
 }
