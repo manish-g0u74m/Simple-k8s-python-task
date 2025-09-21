@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: knainskep-pod
+spec:
+  containers:
+  - name: knainskep-container
+    image: g0u74m/knainskep-app:latest
+    ports:
+    - containerPort: 5000
