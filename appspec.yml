@@ -9,6 +9,12 @@ hooks:  # Hooks block are steps in the deployment lifecycle.
     - location: scripts/stop.sh
       timeout: 300
       runas: ubuntu # must match EC2 user
+  
+  BeforeInstall:
+    - location: scripts/beforeinstall.sh
+      timeout: 300
+      runas: ubuntu
+      
   AfterInstall: # start new app 
     - location: scripts/start.sh
       timeout: 300
