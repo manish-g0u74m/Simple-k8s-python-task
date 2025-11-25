@@ -1,5 +1,5 @@
 #!/bin/bash
-cd /home/ec2-user/app
+cd /home/ubuntu/app
 docker stop myapp || true
 docker rm myapp || true
 docker pull $(cat imageDetail.json | jq -r '.ImageURI')
