@@ -4,7 +4,7 @@ phases:
   pre_build:
     commands:
       - echo Logging into Amazon ECR
-      - aws ecr get-login-password --region <REGION> | docker login --username AWS --password-stdin <AWS_ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 921205606338.dkr.ecr.us-east-1.amazonaws.com
 
       - IMAGE_URI=921205606338.dkr.ecr.us-east-1.amazonaws.com/g0u74m/python-app
   build:
