@@ -1,0 +1,17 @@
+version: 0.0   # it's a CodeDeploy specific version 
+os: linux # This tells CodeDeploy that the deployment will run on a Linux EC2 instance.
+files:   # files block is used for copy my application files in instance on a specific location 
+  - source: /
+    destination: /home/ubuntu/app
+
+hooks:  # Hooks block are steps in the deployment lifecycle.
+  ApplicationStop: # Runs before deploying new files.
+    - location: scripts/stop.sh
+      timeout: 300
+      runas: ubuntu # must match EC2 user
+  AfterInstall: # start new app 
+    - location: scripts/start.sh
+      timeout: 300
+      runas: ubuntu
+
+
