@@ -1,0 +1,25 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging into Amazon ECR
+      - aws ecr get-login-password --region <REGION> | docker login --username AWS --password-stdin <AWS_ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com
+
+      - IMAGE_URI=921205606338.dkr.ecr.us-east-1.amazonaws.com/g0u74m/python-app
+  build:
+    commands:
+      - echo Building Docker image
+      - docker build -t simple-python-app .
+      - docker tag simple-python-app:latest $IMAGE_URI
+
+  post_build:
+    commands:
+      - echo Pushing image to ECR
+      - docker push $IMAGE_URI
+      - echo Writing image name to file
+      - printf '{"ImageURI":"%s"}' $IMAGE_URI > imageDetail.json
+
+artifacts:
+  files:
+    - imageDetail.json
