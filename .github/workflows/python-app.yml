@@ -1,4 +1,4 @@
-name: Python application
+name: Python application CI/CD
 
 on:
   push:
@@ -11,19 +11,39 @@ permissions:
 
 jobs:
   checkout:
-    runs-on: [self-hosted, manish-ec2]
+    runs-on: ubuntu-latest
     steps:
       - name: checkout code
         uses: actions/checkout@v4
 
   scan:
     name: gitleaks
-    runs-on: [self-hosted, manish-ec2]
+    needs: checkout
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - name: checkout again 
+        uses: actions/checkout@v4
 
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sonarqube:
+    name: SonarQube Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run SonarQube Scan
+        run: |
+          sonar-scanner \
+            -Dsonar.projectKey=simple-python-app \
+            -Dsonar.projectName="Simple Python App" \
+            -Dsonar.sources=. \
+            -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }} \
+            -Dsonar.login=${{ secrets.SONARQUBE_TOKEN }}
+
+        
+
