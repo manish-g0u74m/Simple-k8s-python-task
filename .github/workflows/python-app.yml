@@ -2,30 +2,28 @@ name: Python application
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions:
   contents: read
 
 jobs:
   checkout:
-    runs-on: manish-ec2
+    runs-on: [self-hosted, manish-ec2]
     steps:
-    - name: checkout code
-      uses: actions/checkout@v4
+      - name: checkout code
+        uses: actions/checkout@v4
 
   scan:
     name: gitleaks
-    runs-on: manish-ec2
+    runs-on: [self-hosted, manish-ec2]
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-     
-  
-
