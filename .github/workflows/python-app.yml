@@ -77,7 +77,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sonarqube-report
-          path: .scannerwork/
+          path: ${{ github.workspace }}/.scannerwork/report-task.txt
 
   update-env:
       name: update secrets
