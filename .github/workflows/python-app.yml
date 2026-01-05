@@ -58,32 +58,27 @@ jobs:
             -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }} \
             -Dsonar.login=${{ secrets.SONARQUBE_TOKEN }}
 
-      - name: SonarQube Quality Gate
+      - name: SonarQube Quality Gate Check
+        id: quality-gate
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        with:
+          pollingTimeoutSec: 600
+        env:
+          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONARQUBE_HOST }}
+
+      # 🔹 Show Quality Gate Result
+      - name: Show Quality Gate Status
         run: |
-          set -e
+          echo "Quality Gate Status: ${{ steps.quality-gate.outputs.quality-gate-status }}"
 
-          RESPONSE=$(curl -s -u ${{ secrets.SONARQUBE_TOKEN }}: \
-          "${{ secrets.SONARQUBE_HOST }}/api/qualitygates/project_status?projectKey=simple-python-app")
-
-          echo "SonarQube API Response:"
-          echo "$RESPONSE"
-
-          STATUS=$(echo "$RESPONSE" | jq -r '.projectStatus.status')
-
-          echo "Quality Gate Status: $STATUS"
-
-          if [ "$STATUS" != "OK" ]; then
-            echo "Quality Gate Failed"
-            exit 1
-          fi
-
-
-      - name: Upload Sonar Report
+      # 🔹 Upload Sonar Artifacts (optional but good)
+      - name: Upload Sonar Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: sonarqube-report
           path: .scannerwork/
-          
+
   update-env:
       name: update secrets
       runs-on: manish-ec2
