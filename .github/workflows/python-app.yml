@@ -60,16 +60,23 @@ jobs:
 
       - name: SonarQube Quality Gate
         run: |
-          sleep 15
-          STATUS=$(curl -s -u ${{ secrets.SONARQUBE_TOKEN }}: \
-          "${{ secrets.SONARQUBE_HOST }}/api/qualitygates/project_status?projectKey=simple-python-app" \
-          | jq -r '.projectStatus.status')
+          set -e
+
+          RESPONSE=$(curl -s -u ${{ secrets.SONARQUBE_TOKEN }}: \
+          "${{ secrets.SONARQUBE_HOST }}/api/qualitygates/project_status?projectKey=simple-python-app")
+
+          echo "SonarQube API Response:"
+          echo "$RESPONSE"
+
+          STATUS=$(echo "$RESPONSE" | jq -r '.projectStatus.status')
 
           echo "Quality Gate Status: $STATUS"
+
           if [ "$STATUS" != "OK" ]; then
             echo "Quality Gate Failed"
             exit 1
           fi
+
 
       - name: Upload Sonar Report
         uses: actions/upload-artifact@v4
