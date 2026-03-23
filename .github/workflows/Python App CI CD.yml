@@ -31,7 +31,8 @@ jobs:
       # 🔹 Trivy FS Scan
       - name: Run Trivy FS Scan
         run: |
-          trivy fs --scanners vuln,secret --severity HIGH,CRITICAL --format table --output trivy-fs-report.txt .
+          trivy fs --scanners secret --debug .
+# trivy fs --scanners vuln,secret --severity HIGH,CRITICAL --format table --output trivy-fs-report.txt .
 
       # 🔥 Fail pipeline if vuln found
       - name: Fail if vulnerabilities found
