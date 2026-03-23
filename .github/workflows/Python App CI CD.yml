@@ -18,7 +18,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 🔥 Install Trivy (manual)
+      # 🔥 Install Trivy
       - name: Install Trivy
         run: |
           sudo apt-get update
@@ -28,24 +28,33 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y trivy
 
-      # 🔹 Trivy FS Scan
-      - name: Run Trivy FS Scan
+      # 🔍 FS Scan (Report)
+      - name: Run Trivy FS Scan (Report)
         run: |
-           trivy fs --scanners secret --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL .
-# trivy fs --scanners vuln,secret --severity HIGH,CRITICAL --format table --output trivy-fs-report.txt .
+          echo "Starting Trivy FS Scan..."
+          trivy fs \
+            --scanners vuln,secret \
+            --severity HIGH,CRITICAL \
+            --format table \
+            --output trivy-fs-report.txt \
+            .
+          echo "Scan completed"
 
-      # 🔥 Fail pipeline if vuln found
-      - name: Fail if vulnerabilities found
+      # 🔥 Fail pipeline if issues found
+      - name: Fail if vulnerabilities/secrets found
         run: |
-          trivy fs --scanners vuln,secret --severity HIGH,CRITICAL --exit-code 1 .
+          trivy fs \
+            --scanners vuln,secret \
+            --severity HIGH,CRITICAL \
+            --exit-code 1 \
+            .
 
-      # 🔹 Upload Report
+      # 📦 Upload report
       - name: Upload Trivy FS Report
         uses: actions/upload-artifact@v4
         with:
           name: trivy-fs-report
           path: trivy-fs-report.txt
-          # retention-days optional hai (neeche explain 👇)
 
 
   sonarqube:
@@ -108,7 +117,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 🔥 Install Trivy again (new job = new environment)
+      # 🔥 Install Trivy (new job)
       - name: Install Trivy
         run: |
           sudo apt-get update
@@ -127,10 +136,13 @@ jobs:
         run: |
           docker build -t ${{ secrets.DOCKER_IMAGE }}:latest .
 
-      # 🔥 Trivy Image Scan
+      # 🔍 Image Scan
       - name: Scan Docker Image
         run: |
-          trivy image --severity HIGH,CRITICAL --exit-code 1 ${{ secrets.DOCKER_IMAGE }}:latest
+          trivy image \
+            --severity HIGH,CRITICAL \
+            --exit-code 1 \
+            ${{ secrets.DOCKER_IMAGE }}:latest
 
       - name: Push Docker Image
         run: |
