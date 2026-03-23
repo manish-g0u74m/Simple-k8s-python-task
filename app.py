@@ -1,7 +1,7 @@
 from flask import Flask
 
 app = Flask(__name__)
-
+AWS_SECRET_ACCESS_KEY="AKIAIOSFODNN7EXAMPLE"
 @app.route('/')
 def welcome():
     return "<h1>Welcome to the Kainskep Solutions!</h1>"
