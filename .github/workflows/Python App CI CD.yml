@@ -18,24 +18,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 🔥 Install Trivy (manual)
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install -y trivy
 
-
-      # 🔹 Trivy FS Scan (code + dependencies)
+      # 🔹 Trivy FS Scan
       - name: Run Trivy FS Scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'table'
-          output: 'trivy-fs-report.txt'
-          severity: 'CRITICAL,HIGH'
-          exit-code: '1'   # 🔥 fail pipeline if vuln found
+        run: |
+          trivy fs --severity HIGH,CRITICAL --format table --output trivy-fs-report.txt .
 
+      # 🔥 Fail pipeline if vuln found
+      - name: Fail if vulnerabilities found
+        run: |
+          trivy fs --severity HIGH,CRITICAL --exit-code 1 .
+
+      # 🔹 Upload Report
       - name: Upload Trivy FS Report
         uses: actions/upload-artifact@v4
         with:
           name: trivy-fs-report
           path: trivy-fs-report.txt
+          # retention-days optional hai (neeche explain 👇)
 
 
   sonarqube:
@@ -98,6 +107,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 🔥 Install Trivy again (new job = new environment)
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install -y trivy
+
       - name: Docker Login
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
@@ -107,14 +126,10 @@ jobs:
         run: |
           docker build -t ${{ secrets.DOCKER_IMAGE }}:latest .
 
-      # 🔥 Trivy Image Scan (IMPORTANT)
-      - name: Scan Docker Image with Trivy
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: '${{ secrets.DOCKER_IMAGE }}:latest'
-          format: 'table'
-          severity: 'CRITICAL,HIGH'
-          exit-code: '1'
+      # 🔥 Trivy Image Scan
+      - name: Scan Docker Image
+        run: |
+          trivy image --severity HIGH,CRITICAL --exit-code 1 ${{ secrets.DOCKER_IMAGE }}:latest
 
       - name: Push Docker Image
         run: |
