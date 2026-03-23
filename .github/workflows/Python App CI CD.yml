@@ -10,28 +10,43 @@ permissions:
   contents: read
 
 jobs:
-  checkout:
-    runs-on: manish-ec2
-    steps:
-      - name: checkout code
-        uses: actions/checkout@v4
-
   scan:
-    name: gitleaks
-    needs: checkout
-    runs-on: manish-ec2
+    name: Code Security Scan
+    runs-on: self-hosted
+
     steps:
-      - name: checkout again 
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - uses: gitleaks/gitleaks-action@v2
+      # 🔹 Gitleaks Scan
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # 🔹 Trivy FS Scan (code + dependencies)
+      - name: Run Trivy FS Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          output: 'trivy-fs-report.txt'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'   # 🔥 fail pipeline if vuln found
+
+      - name: Upload Trivy FS Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-fs-report
+          path: trivy-fs-report.txt
+
+
   sonarqube:
     name: SonarQube Scan
-    runs-on: manish-ec2
+    runs-on: self-hosted
     needs: scan
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -39,13 +54,11 @@ jobs:
           fetch-depth: 0
 
       - name: Install SonarScanner
-
         run: |
           sudo apt-get update
           sudo apt-get install -y unzip
           curl -sSLo sonar.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
           unzip sonar.zip
-          sudo rm -rf /opt/sonar-scanner   
           sudo mv sonar-scanner-* /opt/sonar-scanner
           sudo ln -sf /opt/sonar-scanner/bin/sonar-scanner /usr/local/bin/sonar-scanner
 
@@ -58,7 +71,7 @@ jobs:
             -Dsonar.host.url=${{ secrets.SONARQUBE_HOST }} \
             -Dsonar.login=${{ secrets.SONARQUBE_TOKEN }}
 
-      - name: SonarQube Quality Gate Check
+      - name: Quality Gate Check
         id: quality-gate
         uses: sonarsource/sonarqube-quality-gate-action@master
         with:
@@ -67,30 +80,23 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONARQUBE_HOST }}
 
-      # 🔹 Show Quality Gate Result
-      - name: Show Quality Gate Status
-        run: |
-          echo "Quality Gate Status: ${{ steps.quality-gate.outputs.quality-gate-status }}"
-
-      # 🔹 Upload Sonar Artifacts (optional but good)
-      - name: Upload Sonar Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: sonarqube-report
-          path: ${{ github.workspace }}/.scannerwork/report-task.txt
 
   update-env:
-      name: update secrets
-      runs-on: manish-ec2
-      needs: sonarqube
-      steps:
-        - name: update .env file 
-          run: |
-            python3 update-secrets.py
+    name: Update Secrets
+    runs-on: self-hosted
+    needs: sonarqube
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update .env file
+        run: |
+          python3 update-secrets.py
+
 
   docker:
-    name: Docker Build & Push
-    runs-on: manish-ec2
+    name: Docker Build, Scan & Push
+    runs-on: self-hosted
     needs: update-env
 
     steps:
@@ -104,6 +110,15 @@ jobs:
       - name: Build Docker Image
         run: |
           docker build -t ${{ secrets.DOCKER_IMAGE }}:latest .
+
+      # 🔥 Trivy Image Scan (IMPORTANT)
+      - name: Scan Docker Image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ secrets.DOCKER_IMAGE }}:latest'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
 
       - name: Push Docker Image
         run: |
