@@ -31,12 +31,12 @@ jobs:
       # 🔹 Trivy FS Scan
       - name: Run Trivy FS Scan
         run: |
-          trivy fs --severity HIGH,CRITICAL --format table --output trivy-fs-report.txt .
+          trivy fs --scanners vuln,secret --severity HIGH,CRITICAL --format table --output trivy-fs-report.txt .
 
       # 🔥 Fail pipeline if vuln found
       - name: Fail if vulnerabilities found
         run: |
-          trivy fs --severity HIGH,CRITICAL --exit-code 1 .
+          trivy fs --scanners vuln,secret --severity HIGH,CRITICAL --exit-code 1 .
 
       # 🔹 Upload Report
       - name: Upload Trivy FS Report
