@@ -8,7 +8,7 @@ hooks:  # Hooks block are steps in the deployment lifecycle.
   ApplicationStop: # Runs before deploying new files.
     - location: scripts/stop.sh
       timeout: 300
-      runas: ubuntu # must match EC2 user
+      runas: ubuntu # must match EC2  user
   
   BeforeInstall:
     - location: scripts/beforeinstall.sh
